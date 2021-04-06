@@ -1,7 +1,7 @@
 %{
     #include <stdio.h>
-    #include "analyseur.tab.h"
     #include <string.h>
+    #include "analyseur.tab.h"
 
     struct tab {
         struct listeSymbole *contenu;
@@ -26,19 +26,35 @@
 	struct listeSymbole *curr=&(struct listeSymbole){0, 0, 0, "0", NULL};
 	struct tab *currTab = &tableDesSymboles;
 	struct tab *nextTab;
-
+  /*"<table>"|"<table "[^<>]+">"	{ printf("Début de tableau\n"); BEGIN TABLEAU; etatin++; rowAct = 0; return DEBTAB; }
+  "</table>"	{ printf("Fin de tableau\n"); if(etatin>0) {etatin-- ; if(etatin==0) { BEGIN INITIAL ; } } currTab->tabsuivant=nextTab; currTab=nextTab; nextTab=&(struct tab){NULL, NULL}; return FINTAB; }
+  "<caption>"|"<caption "[^<>]+">"	{ printf("Début de légende\n"); celAct=1; return DEBCAP; }
+  "</caption>"	{ printf("Fin de légende\n"); return FINCAP; }
+  "<tr>"|"<tr "[^<>]+">"	{ printf("Début de ligne\n"); rowAct++; colAct=0; return DEBLIG; }
+  "</tr>"	{ printf("Fin de ligne\n"); return FINLIG; }
+  "<td>"|"<td "[^<>]+">"	{ printf("Début de cellule\n"); colAct++; return DEBCEL; }
+  "</td>"	{ printf("Fin de cellule\n"); return FINCEL; }
+  "<th>"|"<th "[^<>]+">"	{ printf("Début de cellule d'en-tête\n"); celAct=2; return DEBCELENT;  }
+  "</th>"	{ printf("Fin de cellule d'en-tête\n"); return FINCELENT; }
+  "<thead>"|"<thead "[^<>]+">"	{ printf("Début de bloc d'en-têtes\n"); return DEBHEAD; }
+  "</thead>"	{ printf("Fin de bloc d'en-têtes\n"); return FINHEAD; }
+  "<tbody>"|"<tbody "[^<>]+">"	{ printf("Début de bloc de corps\n"); return DEBBODY; }
+  "</tbody>"	{ printf("Fin de bloc de corps\n"); return FINBODY; }
+  (\n|\r\n|" ")+	{}
+  <TABLEAU>[^<>]+ { printf("Contenu de cellule/en-tête/légende\n"); push_back(currTab, celAct, colAct, rowAct, yytext); yylval.texte=strdup(yytext); return CONTENU; }
+  .	{}*/
 %}
 %start TABLEAU
 %%
 "<table>"|"<table "[^<>]+">"	{ printf("Début de tableau\n"); BEGIN TABLEAU; etatin++; rowAct = 0; return DEBTAB; }
-"</table>"	{ printf("Fin de tableau\n"); if(etatin>0) {etatin-- ; if(etatin==0) { BEGIN INITIAL ; } } currTab->tabsuivant=nextTab; currTab=nextTab; nextTab=&(struct tab){NULL, NULL}; return FINTAB; }
-"<caption>"|"<caption "[^<>]+">"	{ printf("Début de légende\n"); celAct=1; return DEBCAP; }
+"</table>"	{ printf("Fin de tableau\n"); if(etatin>0) {etatin-- ; if(etatin==0) { BEGIN INITIAL ; } } return FINTAB; }
+"<caption>"|"<caption "[^<>]+">"	{ printf("Début de légende\n"); return DEBCAP; }
 "</caption>"	{ printf("Fin de légende\n"); return FINCAP; }
-"<tr>"|"<tr "[^<>]+">"	{ printf("Début de ligne\n"); rowAct++; colAct=0; return DEBLIG; }
+"<tr>"|"<tr "[^<>]+">"	{ printf("Début de ligne\n"); rowAct++; colAct=0; yylval.row=rowAct; return DEBLIG; }
 "</tr>"	{ printf("Fin de ligne\n"); return FINLIG; }
-"<td>"|"<td "[^<>]+">"	{ printf("Début de cellule\n"); colAct++; return DEBCEL; }
+"<td>"|"<td "[^<>]+">"	{ printf("Début de cellule\n"); colAct++; yylval.col=colAct; yylval.typeCel=0; return DEBCEL; }
 "</td>"	{ printf("Fin de cellule\n"); return FINCEL; }
-"<th>"|"<th "[^<>]+">"	{ printf("Début de cellule d'en-tête\n"); celAct=2; return DEBCELENT;  }
+"<th>"|"<th "[^<>]+">"	{ printf("Début de cellule d'en-tête\n"); colAct++; yylval.col=colAct; yylval.typeCel=1; return DEBCELENT;  }
 "</th>"	{ printf("Fin de cellule d'en-tête\n"); return FINCELENT; }
 "<thead>"|"<thead "[^<>]+">"	{ printf("Début de bloc d'en-têtes\n"); return DEBHEAD; }
 "</thead>"	{ printf("Fin de bloc d'en-têtes\n"); return FINHEAD; }

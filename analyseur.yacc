@@ -1,5 +1,4 @@
 %{
-	#define YYSTYPE char*	
 	#include <stdlib.h>
 	#include <stdio.h>
 	#include <string.h>
@@ -8,25 +7,32 @@
 %}
 %union
 {
+	int typeCel;
+	int col;
+	int row;
 	char* texte;
 }
-%type <texte> tableau liste_lignes ligne cellule liste_cellules description_sans_entetes CONTENU DEBTAB FINTAB DEBCEL FINCEL
-%token DEBTAB
-%token FINTAB
-%token DEBLIG
-%token FINLIG
-%token DEBCEL
-%token FINCEL
-%token DEBCELENT
-%token FINCELENT
-%token DEBHEAD
-%token FINHEAD
-%token DEBBODY
-%token FINBODY
-%token DEBCAP
-%token FINCAP
-%token CONTENU
-
+%token <texte> DEBTAB
+%token <texte> FINTAB
+%token <texte> FINLIG
+%token <texte> FINCEL
+%token <texte> FINCELENT
+%token <texte> DEBHEAD
+%token <texte> FINHEAD
+%token <texte> DEBBODY
+%token <texte> FINBODY
+%token <texte> DEBCAP
+%token <texte> FINCAP
+%token <texte> DEBLIG
+%token <texte> DEBCEL
+%token <texte> DEBCELENT
+%token <texte> CONTENU
+%type <texte> cellule
+%type <texte> tableau
+%type <texte> description_sans_entetes
+%type <texte> liste_lignes
+%type <texte> liste_cellules
+%type <texte> ligne
 %start liste_tableaux
 %%
 liste_tableaux: tableau liste_tableaux { printf("%s\n\n", $1); }
@@ -49,11 +55,11 @@ description_avec_entetes: ligne_entetes liste_lignes
 description_sans_entetes: liste_lignes { $$ = $1; }
 liste_lignes: ligne { $$ = $1; }
 | ligne liste_lignes { $$ = $1; }
-ligne: DEBLIG liste_cellules FINLIG { $$ = $2; }
+ligne: DEBLIG liste_cellules FINLIG
 liste_cellules: cellule { $$ = $1; }
 | cellule liste_cellules { $$ = $1; }
-cellule: DEBCEL CONTENU FINCEL { $$ = $2;  }
-| DEBCEL tableau FINCEL
+cellule: DEBCEL CONTENU FINCEL { $$ = $2; }
+//| DEBCEL tableau FINCEL
 %%
 int main(){
 	yyparse();
