@@ -4,6 +4,8 @@
 	#include <string.h>
 	int yylex();
 	int yyerror(char *);
+	int prevLen=-1;
+	int len=0;
 %}
 %union
 {
@@ -27,11 +29,11 @@
 %token <col, typeCel> DEBCEL
 %token <col, typeCel> DEBCELENT
 %token <texte> CONTENU
-%type <texte> cellule tableau description_sans_entetes liste_lignes liste_cellules ligne entete
+%type <texte> cellule entete
 %start liste_tableaux
 %%
-liste_tableaux: tableau liste_tableaux
-|
+liste_tableaux: liste_tableaux tableau
+| tableau { prevLen=-1; printf("\n"); }
 tableau: DEBTAB legende blocentetes blocorps_sans_entetes FINTAB
 | DEBTAB legende blocorps_avec_entetes FINTAB
 | DEBTAB legende blocorps_sans_entetes FINTAB
@@ -50,13 +52,27 @@ description_avec_entetes: ligne_entetes liste_lignes
 description_sans_entetes: liste_lignes
 liste_lignes: ligne
 | ligne liste_lignes
-ligne: DEBLIG liste_cellules FINLIG { printf("\n"); }
+ligne: DEBLIG liste_cellules FINLIG {
+	printf("\n");
+  if(prevLen==-1){
+		prevLen=len;
+		len=0;
+	}
+	else{
+		if(len!=prevLen)
+			yyerror("Les lignes n'ont pas le même nombre de cellules");
+		else{
+			prevLen=len;
+			len=0;
+		}
+	}
+}
 liste_cellules: cellule { printf("%s;", $1); }
 | liste_cellules cellule { printf("%s", $2); }
-cellule: DEBCEL CONTENU FINCEL { $$=$2; }
+cellule: DEBCEL CONTENU FINCEL { $$=$2; len++; }
 //| DEBCEL tableau FINCEL
 %%
 int main(){
 	yyparse();
 }
-int yyerror( char *s) { printf( "%s\n", s); return 0; }
+int yyerror(char *s) { printf( "%s\n", s); exit(0); }
